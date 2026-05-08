@@ -25,6 +25,10 @@ from app.agents.final_agent import (
     final_agent
 )
 
+from app.memory.memory_manager import (
+    get_full_memory
+)
+
 # -------------------------
 # Nodes
 # -------------------------
@@ -74,14 +78,33 @@ def critic_node(state: AgentState):
 def final_node(state: AgentState):
 
     answer = final_agent(
+
         state["question"],
+    
+        state["memory"],
+    
         state["context"],
+    
         state["research"],
+    
         state["critique"]
     )
 
     return {
         "answer": answer
+    }
+
+def memory_node(state: AgentState):
+
+    memories = get_full_memory(
+
+        state["session_id"],
+
+        state["question"]
+    )
+
+    return {
+        "memory": str(memories)
     }
 
 # -------------------------
@@ -117,7 +140,17 @@ workflow.add_node(
     final_node
 )
 
+workflow.add_node(
+    "memory",
+    memory_node
+)
+
 workflow.set_entry_point(
+    "memory"
+)
+
+workflow.add_edge(
+    "memory",
     "planner"
 )
 

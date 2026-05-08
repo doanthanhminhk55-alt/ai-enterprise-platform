@@ -70,3 +70,26 @@ Reflection Loop
 ReAct workflow
 
 pip install langchain-community
+
+
+Phase 5 — Redis + Long-Term Memory + Session AI
+“multi-agent AI” to “stateful production AI platform”
+User Chat
+    ↓
+Session Memory
+    ↓
+Redis Cache
+    ↓
+Long-term Semantic Memory
+    ↓
+Relevant Memory Retrieval
+    ↓
+LangGraph Agents
+
+D:\redis\Redis-x64-5.0.14.1
+run redis-server.exe
+
+run redis-cli.exe 
+run ping
+
+pip install redis

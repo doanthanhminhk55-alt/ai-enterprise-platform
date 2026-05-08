@@ -2,18 +2,19 @@ from app.rag.groq_service import ask_groq
 
 def final_agent(
     question,
+    memory,
     context,
     research,
     critique
 ):
 
     prompt = f"""
-Generate the final improved answer.
+You are a powerful AI assistant.
 
-Question:
-{question}
+Conversation Memory:
+{memory}
 
-Context:
+Retrieved Context:
 {context}
 
 Research:
@@ -22,10 +23,10 @@ Research:
 Critique:
 {critique}
 
-Provide:
-- accurate answer
-- concise explanation
-- final polished response
+Question:
+{question}
+
+Generate the best final answer.
 """
 
     answer = ask_groq(
