@@ -13,7 +13,7 @@ def ask_groq(context, question):
     prompt = f"""
 You are an AI assistant.
 
-Answer ONLY using the provided context.
+Answer ONLY from context.
 
 Context:
 {context}
@@ -29,7 +29,39 @@ Question:
                 "role": "user",
                 "content": prompt
             }
-        ]
+        ],
+        temperatrue=0.3
     )
 
     return response.choices[0].message.content
+
+
+def ask_groq_stream(context, question):
+
+    prompt = f"""
+Context:
+{context}
+
+Question:
+{question}
+"""
+
+    stream = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+
+        stream=True
+    )
+
+    for chunk in stream:
+
+        content = chunk.choices[0].delta.content
+
+        if content:
+            yield content

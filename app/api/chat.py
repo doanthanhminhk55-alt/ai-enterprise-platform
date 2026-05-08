@@ -1,22 +1,40 @@
 from fastapi import APIRouter
-
-from app.rag.rag_pipeline import retrieve_context
-from app.rag.groq_service import ask_groq
+from app.agents.graph import graph
+from app.memory.chat_memory import (
+    add_message,
+    get_messages
+)
 
 router = APIRouter()
 
 @router.get("/chat")
 
-def chat(question: str):
+def chat(
+    question: str,
+    session_id: str = "default"
+):
+    add_message(
+        session_id,
+        "user",
+        question
+    )
 
-    context = retrieve_context(question)
+    result = graph.invoke({
+        "question": question
+    })
 
-    answer = ask_groq(
-        context=context,
-        question=question
+    answer = result["answer"]
+
+    add_message(
+        session_id,
+        "assistant",
+        answer
     )
 
     return {
         "question": question,
-        "answer": answer
+        "answer": answer,
+        "memory": get_messages(session_id)
     }
+
+    
