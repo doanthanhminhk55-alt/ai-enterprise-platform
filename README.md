@@ -46,3 +46,27 @@ Groq Streaming Response
 
 pip install langgraph langchain langchain-core
 pip freeze > requirements.txt
+
+PHASE 4 Multi-Agent AI System
+
+User Question
+      ↓
+Planner Agent
+      ↓
+Retriever Agent
+      ↓
+Research Agent
+      ↓
+Critic Agent
+      ↓
+Final Answer Agent
+
+Planner Agent
+Retriever Agent
+Critic Agent
+Summarizer Agent
+Tool Router
+Reflection Loop
+ReAct workflow
+
+pip install langchain-community

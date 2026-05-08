@@ -30,7 +30,7 @@ Question:
                 "content": prompt
             }
         ],
-        temperatrue=0.3
+        temperature=0.3
     )
 
     return response.choices[0].message.content
