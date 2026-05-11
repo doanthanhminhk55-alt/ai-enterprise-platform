@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>
+        AI Enterprise Platform
+    </title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>
+            AI Enterprise Platform
+        </h1>
+
+        <!-- Upload Section -->
+
+        <div class="card">
+
+            <h2>
+                Upload PDF
+            </h2>
+
+            <input type="file" id="pdfFile" accept=".pdf">
+
+            <button onclick="uploadPDF()">
+                Upload
+            </button>
+
+            <div id="uploadStatus"></div>
+
+        </div>
+
+        <!-- Chat Section -->
+
+        <div class="card">
+
+            <h2>
+                Chat With Document
+            </h2>
+
+            <div id="chatBox"></div>
+
+            <div class="inputRow">
+
+                <input type="text" id="questionInput" placeholder="Ask something...">
+
+                <button onclick="sendMessage()">
+                    Send
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
