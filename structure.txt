@@ -1,0 +1,90 @@
+1. Một câu giới thiệu (elevator pitch)
+Đây là ứng dụng QA / kiểm tra báo cáo kết cấu (PDF): người dùng upload PDF, backend lưu file, rồi gọi Google Gemini để phân tích theo prompt + tiêu chí (criteria) lấy từ PostgreSQL. Frontend hiển thị kết quả upload và kết quả AI.
+
+2. Stack kỹ thuật
+Lớp	Công nghệ
+Frontend
+React, Vite, React Router, fetch + env VITE_API_BASE_URL
+Backend
+Python 3.11, FastAPI, async SQLAlchemy + asyncpg
+DB
+PostgreSQL 15, Alembic migrations
+AI
+Google Gemini gemini-2.5-flash (google.genai), model cấu hình qua GEMINI_MODEL
+DevOps
+Docker Compose (db + backend + frontend), nginx cho static build
+3. Luồng nghiệp vụ chính (nên vẽ nhanh khi demo)
+Chọn / kéo thả PDF
+POST /api/upload (multipart)
+validate PDF (size, %PDF...)
+Lưu binary + TTL
+document_id
+POST /api/analyze { document_id }
+Lấy PDF + default settings (base_prompt, criteria)
+Phân tích đa tiêu chí (song song trong Gemini service)
+Text theo từng criterion
+results[]
+sessionStorage → /result
+User
+React (Vite)
+FastAPI
+PostgreSQL
+Gemini
+Điểm hay để nói: Frontend chỉ gửi document_id khi analyze; prompt và criteria do admin/DB quyết định, tách biệt UI và nghiệp vụ QA.
+
+4. Backend: endpoint và trách nhiệm
+POST /api/upload: đọc file, validate (kích thước, extension, magic bytes %PDF), lưu Document (binary trong DB, có ttl_delete_date).
+GET /api/documents/{id}/download: stream PDF từ DB.
+POST /api/analyze: load document + settings mặc định (base_prompt, criteria JSON), gọi get_ai_service() → hiện tại chỉ gemini, factory sẵn sàng mở rộng provider khác.
+/health: health check cho load balancer / Docker.
+Placeholder (chưa làm đầy đủ): job status, results by job, CRUD settings qua API (trong code ghi Phase 4–6).
+Tham chiếu nhanh:
+
+
+routes.py
+Lines 31-90
+@router.post("/upload", response_model=PDFUploadResponse)
+async def upload_pdf(
+    file: UploadFile = File(...), session: AsyncSession = Depends(get_session)
+):
+    # ...
+        document_id = await pdf_service.save_pdf(
+            file.filename, file_content, session
+        )
+
+routes.py
+Lines 141-252
+@router.post("/analyze", response_model=AnalyzeDocumentResponse)
+async def analyze_document(
+    request: AnalyzeDocumentRequest, session: AsyncSession = Depends(get_session)
+):
+    # ...
+        settings = await settings_service.get_default_settings(session)
+        # ...
+        ai_service = get_ai_service()
+        analysis_response = await ai_service.analyze_document(analysis_request)
+5. Data model (để nói về “thiết kế dài hạn”)
+Trong db_models.py có:
+
+Settings: base_prompt + criteria (JSON) — đúng hướng cấu hình QA không hard-code trong code.
+Document: PDF trong LargeBinary, TTL retention.
+AnalysisJob, AnalysisResult: schema cho xử lý bất đồng bộ / lưu kết quả lâu dài — phù hợp roadmap job queue dù hiện analyze đang đồng bộ trong request.
+6. Frontend: demo UX
+Route: /upload → /result, / redirect upload (App.jsx).
+Upload.jsx: drag-drop, validate PDF client-side (10MB), gọi uploadPDF rồi analyzeDocument, lưu sessionStorage, navigate.
+api.js: base URL từ env, timeout mặc định 30s — lưu ý phỏng vấn: analyze lâu có thể cần tăng timeout hoặc chuyển sang job + polling (đúng với placeholder /api/jobs/...).
+7. Cách chạy demo nhanh
+Docker: docker-compose.yml — Postgres, backend (port nội bộ, healthcheck), frontend 8080:80, biến GEMINI_API_KEY bắt buộc.
+Local dev: Backend README ghi Node 22 + Poetry; cần DATABASE_URL, GEMINI_API_KEY, chạy migrations Alembic theo docs trong Backend/docs/.
+8. Góc “câu hình phỏng vấn” bạn có thể chủ động
+Tại sao lưu PDF trong DB? Đơn giản hóa triển khai, backup theo transaction; trade-off: kích thước DB, có thể chuyển object storage sau.
+Mở rộng AI provider? Đã có AIService abstraction + ai_factory; thêm OpenAI/Claude theo pattern tương tự Gemini.
+Scalability: Analyze đồng bộ có giới hạn; model có AnalysisJob — có thể nói hướng worker + queue (Celery/RQ/Arq) và dùng endpoint status đã placeholder.
+Bảo mật: PDF chứa dữ liệu nhạy cảm — HTTPS (docs/SSL-SETUP.md), CORS ALLOWED_ORIGINS, không expose backend ra ngoài trực tiếp trong compose (ghi chú nginx reverse proxy).
+9. Script demo 2–3 phút (gợi ý)
+Mở UI upload, kéo một PDF báo cáo mẫu (nhỏ, <10MB).
+Giải thích: “Client chỉ upload; server validate và lưu ID.”
+Chờ bước analyze: “Backend lấy prompt/criteria từ DB, Gemini chạy từng tiêu chí.”
+Màn hình Result: chỉ ra từng criteria_name và ai_response.
+(Nếu được) mở Swagger /docs để thể hiện contract API rõ ràng.
+Nếu bạn muốn, có thể bổ sung thêm slide một trang chỉ với diagram trên + 3 bullet “problem / solution / tech” — bạn nói là tôi soạn nội dung slide khớp giọng nói của bạn.
